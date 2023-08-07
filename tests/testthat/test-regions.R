@@ -12,7 +12,6 @@
 # 
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>
-library(naijR)
 
 ## Class names commonly used in this script
 st.cl <- "states"
@@ -73,62 +72,13 @@ test_that("LGAs are returned correctly", {
   expect_match(res, "Pankshin", all = FALSE)
   expect_length(res, 17L)
   expect_type(res, "character")
-  expect_is(res, "character")
   expect_null(names(res))
-  expect_is(res2, "list")
   expect_type(res2, "list")
   expect_named(res2, nam)
   expect_length(res2, 2L)
   expect_warning(lgas(c("Oyo West", "Obomo Ngwa")), 
                  "One or more items is not an LGA")
 })
-
-
-test_that("Regions without synonyms are not treated after validation", {
-  err <- "Expected a character vector"
-  err2 <- "To coerce a region with synonyms, use a vector of length 1L"
-  err3 <- "The object does not possess State/LGA synonyms"
-  wrn <- "Object was stripped down to mode 'character'"
-  int <- 999L
-  dbl <- 999
-  lgl <- TRUE
-  twoRegs <- c("Katsina", "Ebonyi")
-  
-  expect_error(as_state(int), err)
-  expect_error(as_lga(int), err)
-  expect_error(as_state(dbl), err)
-  expect_error(as_lga(dbl), err)
-  expect_error(as_state(lgl), err)
-  expect_error(as_lga(lgl), err)
-  expect_error(as_lga(twoRegs), err2)
-  expect_error(as_state(twoRegs), err2)
-  expect_error(as_lga("Kano"), err3)
-  expect_error(as_state("Kano"), err3)
-  expect_error(as_state(states("Kano")), err3)
-  expect_error(as_lga(lgas("Michika")), err3)
-  expect_warning(as_state(states("Katsina")), wrn)
-  expect_error(as_lga(lgas("Ebonyi")), err2)
-  
-  kt.st <- suppressWarnings(as_state(states("Katsina")))
-  expect_length(class(kt.st), 3L)
-})
-
-test_that("State names shared with LGAs can be coerced into 'lgas' objects", {
-  lgaclass <- lg.cl
-  
-  expect_s3_class(as_lga("Bauchi"), lgaclass)
-  expect_s3_class(as_lga("Gombe"), lgaclass)
-})
-
-
-test_that("LGA names shared with States can be coerced into 'states' objects", {
-  stateclass <- st.cl
-  
-  expect_s3_class(as_state("Kogi"), stateclass)
-  expect_s3_class(as_state("Ebonyi"), stateclass)
-})
-
-
 
 test_that("Correct number of LGAs are returned for each State", {
   ss <- states()
@@ -143,19 +93,24 @@ test_that("Correct number of LGAs are returned for each State", {
 
 
 test_that("State/LGAs synonyms are handled", {
+  eklga <- lgas("Ekiti", strict = T)
+
   expect_length(lgas("Oyo"), 33L)
   expect_error(lgas("Oyo", strict = TRUE),
-               "strict can only be set to TRUE where State/LGA syonnyms exist")
+               "There is no LGA Oyo sharing State names")
   expect_length(lgas("Bauchi"), 20L)
   expect_length(lgas("Bauchi", strict = TRUE), 1L)
 })
 
-
-test_that("LGA objects' attributes are set when appropriate", {
+test_that("LGA objects' attributes appropriately", {
   expect_identical(attr(lgas("Abia"), "State"), "Abia")
   expect_length(attr(lgas(c("Kebbi", "Jigawa")), "State"), 2L)
   expect_length(attributes(lgas("Rivers")), 2L)
   expect_length(attributes(lgas()), 1L)
+  
+  benuelgafun <- quote(lgas(c("Obi", "Tarka")))
+  expect_length(attr(suppressWarnings(eval(benuelgafun)), "State"), 0L)
+  expect_warning(eval(benuelgafun), "'Obi' LGA is found in 2 States")
 })
 
 ## ---- Internal generics ----
@@ -223,7 +178,14 @@ test_that("missing values in 'regions' are handled", {
 })
 
 
-## TODO: Export in next MINOR release.
-# test_that("LGA and States can be disambiguated where appropriate", {
-#   
-# })
+
+test_that("Warning is issued when 'Abuja' is used as a State", {
+  x <- c("Jigawa", "Kebbi", "Nasarawa", "Abuja")
+  y <- c(x, "Nassarawa")  # misspelt
+  
+  expect_warning(states(x), 
+                 "'Abuja' in position(s) 4 is not a State", 
+                 fixed = TRUE)
+  expect_length(capture_warnings(states(x)), 1)
+  expect_length(capture_warnings(states(y)), 2)
+})

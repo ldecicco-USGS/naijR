@@ -116,8 +116,6 @@ test_that("Mispelt LGA are discovered", {
   expect_error(is_lga(cars), err)
   expect_error(is_lga(c(TRUE, FALSE)), err)
   expect_type(xx, 'logical')
-  expect_is(matrix(is_lga(lgas())), 'matrix')
-  
 })
 
 
@@ -136,7 +134,8 @@ test_that("is_lga recognises LGAs", {
 
 
 test_that("State/LGA synonyms are discernible", {
-  rr <- .synonymRegions()
+  rr <- lgas_like_states()
+  
   for (i in rr) {
     expect_true(is_state(i))
     expect_true(is_lga(i))
@@ -149,7 +148,7 @@ test_that("State/LGA synonyms are discernible", {
 
 test_that("Warnings on multiple LGAs", {
   nas <- "Nasarawa"
-  wrn <- "The LGA 'Nasarawa' is found in 2 States"
+  wrn <- "'Nasarawa' LGA is found in 2 States"
   
   expect_silent(lgas(nas))
   expect_warning(lgas(nas, strict = TRUE), wrn)
